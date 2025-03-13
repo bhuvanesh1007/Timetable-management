@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Timetable Management System</h1>
+    <ul id="timetable-list"></ul>
+
+    <form id="addForm">
+        <input type="text" id="course" placeholder="Course Name" required>
+        <input type="text" id="faculty" placeholder="Faculty Name" required>
+        <input type="text" id="time" placeholder="Time" required>
+        <button type="submit">Add Timetable</button>
+    </form>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
