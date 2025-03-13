@@ -1,51 +1,36 @@
-from flask import Flask, render_template, request, jsonify
-import sqlite3
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///timetable.db'
+db = SQLAlchemy(app)
 
-# Database connection function
-def connect_db():
-    return sqlite3.connect('timetable.db')
+class Timetable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    course = db.Column(db.String(100), nullable=False)
+    faculty = db.Column(db.String(100), nullable=False)
+    day = db.Column(db.String(20), nullable=False)
+    start_time = db.Column(db.String(10), nullable=False)
+    end_time = db.Column(db.String(10), nullable=False)
+    room = db.Column(db.String(10), nullable=False)
 
-# Create timetable table
-def create_table():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS timetable (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        course TEXT NOT NULL,
-                        faculty TEXT NOT NULL,
-                        time TEXT NOT NULL)''')
-    conn.commit()
-    conn.close()
+db.create_all()
 
-# API to fetch timetable
-@app.route('/timetable', methods=['GET'])
-def get_timetable():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM timetable")
-    data = cursor.fetchall()
-    conn.close()
-    return jsonify([{"id": row[0], "course": row[1], "faculty": row[2], "time": row[3]} for row in data])
-
-# API to add a new timetable entry
 @app.route('/timetable', methods=['POST'])
 def add_timetable():
-    new_entry = request.json
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO timetable (course, faculty, time) VALUES (?, ?, ?)",
-                   (new_entry['course'], new_entry['faculty'], new_entry['time']))
-    conn.commit()
-    conn.close()
+    data = request.json
+    new_entry = Timetable(**data)
+    db.session.add(new_entry)
+    db.session.commit()
     return jsonify({"message": "Timetable entry added"}), 201
 
-# Home route
-@app.route('/')
-def home():
-    return render_template('index.html')
+@app.route('/timetable', methods=['GET'])
+def get_timetable():
+    timetable = Timetable.query.all()
+    return jsonify([{
+        "course": t.course, "faculty": t.faculty, "day": t.day,
+        "start_time": t.start_time, "end_time": t.end_time, "room": t.room
+    } for t in timetable])
 
 if __name__ == '__main__':
-    create_table()
     app.run(debug=True)
